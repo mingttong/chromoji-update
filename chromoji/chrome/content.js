@@ -1,19 +1,23 @@
 // To implement
 url = chrome.extension.getURL("data/images/emoji/");
-emoji.img_path = url;
-emoji.use_sheet = true;
+var emojiIns = new emoji();
 
-emoji.img_sets = {
-    'apple': {'path': url + 'emoji-data/img-apple-64/', 'sheet': url + 'emoji-data/sheet_apple_64.png', 'mask': 1},
-    'google': {'path': url + 'emoji-data/img-google-64/', 'sheet': url + 'emoji-data/sheet_google_64.png', 'mask': 2},
+emojiIns.img_path = url;
+emojiIns.use_sheet = true;
+
+emojiIns.img_sets = {
+    'apple': { 'path': url + 'emoji-data/img-apple-64/', 'sheet': url + 'emoji-data/sheet_apple_64.png', 'sheet_size' : 64, 'mask': 1 },
+    'google': { 'path': url + 'emoji-data/img-google-64/', 'sheet': url + 'emoji-data/sheet_google_64.png', 'sheet_size' : 64, 'mask': 2 },
     'twitter': {
         'path': url + 'emoji-data/img-twitter-72/',
         'sheet': url + 'emoji-data/sheet_twitter_64.png',
+        'sheet_size' : 64,
         'mask': 4
     },
     'emojione': {
         'path': url + 'emoji-data/img-emojione-64/',
         'sheet': url + 'emoji-data/sheet_emojione_64.png',
+        'sheet_size' : 64,
         'mask': 8
     }
 };
@@ -22,6 +26,7 @@ var running = false;
 var runAgain = false;
 
 var insertId = null;
+
 function insertDebounced() {
     time = 0;
     if (insertId) {
@@ -29,7 +34,7 @@ function insertDebounced() {
     }
     var id = Math.random();
     insertId = id;
-    setTimeout(function () {
+    setTimeout(function() {
         if (id != insertId) {
             return;
         }
@@ -52,9 +57,9 @@ function insert() {
     if (!storage) {
         return;
     }
-    storage.get('type', function (data) {
+    storage.get('type', function(data) {
 
-        style = 'emojione';
+        style = 'twitter';
         if (data.type && data.type.style) {
             style = data.type.style;
         }
@@ -64,13 +69,13 @@ function insert() {
             scale = parseFloat(data.type.scale);
         }
 
-        emoji.img_set = style;
+        emojiIns.img_set = style;
         $('*:not(iframe):not(.emoji-inner):not(style):not(script):not(title):not(input):not(textarea)')
             .contents()
-            .filter(function () {
+            .filter(function() {
                 return this.nodeType === 3;
             })
-            .each(function () {
+            .each(function() {
                 var $this = $(this);
                 var $parentEditable = $this.parents('[contenteditable="true"]');
 
@@ -79,18 +84,18 @@ function insert() {
                 }
                 var self = this;
 
-                content = emoji.replace_unified(self.textContent);
+                content = emojiIns.replace_unified(self.textContent);
                 if (content != this.textContent) {
                     $parent = $this.parent();
                     fontSize = $parent.css('font-size');
                     fontSize = (parseInt(fontSize) * scale) + 'px';
                     var replacementNode = document.createElement('span');
                     replacementNode.className = 'emoji-container';
-                    replacementNode.innerHTML = emoji.replace_unified(htmlEntities(self.textContent));
+                    replacementNode.innerHTML = emojiIns.replace_unified(htmlEntities(self.textContent));
                     self.parentNode.insertBefore(replacementNode, self);
                     self.parentNode.removeChild(self);
                     if (fontSize != '16px') {
-                        $parent.find('.emoji-sizer').css({width: fontSize, height: fontSize});
+                        $parent.find('.emoji-sizer').css({ width: fontSize, height: fontSize });
                     }
                 }
             });
@@ -104,8 +109,9 @@ function insert() {
 
 insert();
 observe();
+
 function observe() {
-    var observer = new MutationObserver(function () {
+    var observer = new MutationObserver(function() {
         insertDebounced();
     });
 
